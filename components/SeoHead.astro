@@ -1,0 +1,69 @@
+---
+// The <head> tags every page needs for search and sharing. Unstyled, and the site
+// keeps its own icons, fonts and scripts. og:image must be absolute: Facebook,
+// LinkedIn and X discard a site-root path, so this resolves it against `site`.
+//
+// CF_PAGES_COMMIT_SHA becomes a meta tag, which is how a deploy is confirmed live.
+interface Props {
+  title: string;
+  description: string;
+  siteName: string;
+  /** Defaults to this page's URL on `site`. */
+  canonical?: string;
+  /** Absolute URL, or a site-root path. */
+  image?: string;
+  imageAlt?: string;
+  /** Written as og:image:width, height and type when given. */
+  imageMeta?: { width: number; height: number; type?: string };
+  ogTitle?: string;
+  ogDescription?: string;
+  robots?: string;
+  author?: string;
+  ogType?: string;
+  locale?: string;
+  /** Meta name for the build SHA. */
+  buildMeta?: string;
+}
+
+const {
+  title,
+  description,
+  siteName,
+  canonical = new URL(Astro.url.pathname, Astro.site).href,
+  image,
+  imageAlt,
+  imageMeta,
+  ogTitle = title,
+  ogDescription = description,
+  robots,
+  author,
+  ogType = 'website',
+  locale,
+  buildMeta = 'site-build',
+} = Astro.props;
+
+const imageUrl = image ? new URL(image, Astro.site ?? canonical).href : undefined;
+const buildSha = process.env.CF_PAGES_COMMIT_SHA;
+---
+{buildSha && <meta name={buildMeta} content={buildSha} />}
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{author && <meta name="author" content={author} />}
+{robots && <meta name="robots" content={robots} />}
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:title" content={ogTitle} />
+<meta property="og:description" content={ogDescription} />
+<meta property="og:url" content={canonical} />
+{imageUrl && <meta property="og:image" content={imageUrl} />}
+{imageUrl && imageAlt && <meta property="og:image:alt" content={imageAlt} />}
+{imageMeta && <meta property="og:image:width" content={String(imageMeta.width)} />}
+{imageMeta && <meta property="og:image:height" content={String(imageMeta.height)} />}
+{imageMeta?.type && <meta property="og:image:type" content={imageMeta.type} />}
+{locale && <meta property="og:locale" content={locale} />}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={ogTitle} />
+<meta name="twitter:description" content={ogDescription} />
+{imageUrl && <meta name="twitter:image" content={imageUrl} />}
+{imageUrl && imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}

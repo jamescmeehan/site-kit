@@ -1,0 +1,12 @@
+---
+// GTM's <noscript> frame, first thing in <body>. Left out of dev-server pages.
+interface Props {
+  id: string;
+  /** First-party tagging origin. */
+  host: string;
+}
+const { id, host } = Astro.props;
+---
+{import.meta.env.PROD && (
+  <noscript><iframe src={`${host}/ns.html?id=${id}`} height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+)}

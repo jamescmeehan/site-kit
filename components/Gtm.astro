@@ -1,0 +1,24 @@
+---
+// First-party GTM loader. Goes at the end of <body>.
+//
+// Deferred to window load, because gtag's main-thread work otherwise competes with
+// LCP: on slow mobile DLI's homepage measured 256ms slower with GTM in <head>, and
+// Kinpine's measured no cost with it deferred. dataLayer exists from the start, so
+// earlier pushes queue and flush when GTM arrives.
+//
+// `hosts` doubles as the production guard, keeping dev servers, previews and
+// pages.dev out of GA4. Tag Assistant still works anywhere through ?gtm_debug=.
+// A visitor opted out at /disable-tracking/ is checked at load time, not parse time,
+// so that page's own toggle wins.
+interface Props {
+  id: string;
+  /** Hostname -> first-party tagging origin. A host not listed gets no GTM. */
+  hosts: Record<string, string>;
+  /** localStorage key that opts this browser out. */
+  optOutKey: string;
+}
+const { id, hosts, optOutKey } = Astro.props;
+const fallback = Object.values(hosts)[0];
+const code = `window.dataLayer=window.dataLayer||[];(function(w,d){var m=${JSON.stringify(hosts)}[location.hostname]||(/[?&]gtm_debug=/.test(location.search)?${JSON.stringify(fallback)}:null);if(!m)return;function s(){try{if(localStorage.getItem(${JSON.stringify(optOutKey)})==='1')return}catch(e){}w.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});var j=d.createElement('script');j.async=true;j.src=m+'/gtm.js?id='+${JSON.stringify(id)};d.head.appendChild(j)}if(d.readyState==='complete')s();else w.addEventListener('load',s,{once:true})})(window,document);`;
+---
+<script is:inline set:html={code} />
