@@ -32,6 +32,16 @@ export const resendSender = (apiKey) => async ({ from, to, subject, text, replyT
   if (!res.ok) throw new Error(`mailer answered ${res.status}`);
 };
 
+/** Sends through an HTTP relay holding the mailbox, for mail hosts Functions can't reach. */
+export const relaySender = ({ url, token }) => async ({ to, subject, text, replyTo }) => {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, subject, text, replyTo }),
+  });
+  if (!res.ok) throw new Error(`relay answered ${res.status}`);
+};
+
 async function passesTurnstile(secret, token, ip) {
   const body = new URLSearchParams({ secret, response: token || '' });
   if (ip) body.set('remoteip', ip);

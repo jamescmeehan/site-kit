@@ -1,6 +1,6 @@
 {
   "name": "@jamescmeehan/site-kit",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Build infrastructure shared by kinpine.com, donnerlakeinn.com and ninameehan.com",
   "private": true,
   "type": "module",

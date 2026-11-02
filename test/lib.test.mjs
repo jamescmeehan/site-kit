@@ -6,7 +6,7 @@ import { llmsTxt } from '../src/llms.mjs';
 import { addDays, fmtSpan, holidayIn, monthsSpanning } from '../src/lodging.mjs';
 import { stripComments } from '../src/strip-comments.mjs';
 import { baselineHeaders } from '../src/integration.mjs';
-import { leadHandler } from '../src/forms.mjs';
+import { leadHandler, relaySender } from '../src/forms.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -144,5 +144,20 @@ test('lastmod: dates a root collection from its content file', () => {
     assert.match(item.lastmod, /^\d{4}-/);
   } finally {
     process.chdir(cwd);
+  }
+});
+
+test('forms: relaySender posts with the token and reports a refusal', async () => {
+  const real = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init) => { calls.push({ url, init }); return new Response('{}', { status: calls.length === 1 ? 200 : 503 }); };
+  try {
+    const send = relaySender({ url: 'https://relay.test/send', token: 't' });
+    await send({ to: ['a@x.test'], subject: 's', text: 'b', replyTo: 'c@x.test' });
+    assert.equal(calls[0].init.headers.Authorization, 'Bearer t');
+    assert.deepEqual(JSON.parse(calls[0].init.body), { to: ['a@x.test'], subject: 's', text: 'b', replyTo: 'c@x.test' });
+    await assert.rejects(send({ to: ['a@x.test'], subject: 's', text: 'b' }), /relay answered 503/);
+  } finally {
+    globalThis.fetch = real;
   }
 });
