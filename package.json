@@ -1,0 +1,23 @@
+{
+  "name": "@jamescmeehan/site-kit",
+  "version": "0.1.0",
+  "description": "Build infrastructure shared by kinpine.com, donnerlakeinn.com and ninameehan.com",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.23.4" },
+  "exports": {
+    "./lastmod": "./src/lastmod.mjs"
+  },
+  "bin": {
+    "site-kit-unshallow": "bin/unshallow.mjs",
+    "site-kit-validate-schema": "bin/validate-schema.mjs",
+    "site-kit-compare-builds": "bin/compare-builds.mjs"
+  },
+  "files": ["bin", "src"],
+  "scripts": {
+    "test": "node --test"
+  },
+  "peerDependencies": {
+    "astro": "^7.0.0"
+  }
+}
