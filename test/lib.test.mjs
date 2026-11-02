@@ -7,6 +7,11 @@ import { addDays, fmtSpan, holidayIn, monthsSpanning } from '../src/lodging.mjs'
 import { stripComments } from '../src/strip-comments.mjs';
 import { baselineHeaders } from '../src/integration.mjs';
 import { leadHandler } from '../src/forms.mjs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { gitLastmodSerializer } from '../src/lastmod.mjs';
 
 test('strip: removes HTML comments, keeps text that only looks like one', async () => {
   const html = '<p>a</p><!-- note --><textarea><!-- keep --></textarea><!--[if IE]>x<![endif]-->';
@@ -122,4 +127,22 @@ test('forms: normalize reshapes posted fields', async () => {
   const res = await h({ request: post({ 'f[name]': 'Al', 'f[email]': 'al@x.test' }), env: {} });
   assert.equal(res.status, 200);
   assert.match(sent[0].text, /Name: Al/);
+});
+
+test('lastmod: dates a root collection from its content file', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'site-kit-'));
+  const git = (...a) => execFileSync('git', a, { cwd: dir, env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@x.test', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@x.test' } });
+  git('init', '-q');
+  mkdirSync(join(dir, 'src/content/post'), { recursive: true });
+  writeFileSync(join(dir, 'src/content/post/hello.md'), '# hi');
+  git('add', '-A');
+  git('commit', '-qm', 'x');
+  const cwd = process.cwd();
+  process.chdir(dir);
+  try {
+    const item = gitLastmodSerializer({ rootCollection: 'post' })({ url: 'https://x.test/hello/' });
+    assert.match(item.lastmod, /^\d{4}-/);
+  } finally {
+    process.chdir(cwd);
+  }
 });

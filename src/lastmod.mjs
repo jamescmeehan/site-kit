@@ -64,9 +64,13 @@ function gitDateMap() {
  * count as the page changing, which is the semantics <lastmod> is supposed to
  * carry. Both page shapes are tried, and the first one with history wins.
  */
-function sourcesFor(pathname, { collections, collectionPrefix }) {
+function sourcesFor(pathname, { collections, collectionPrefix, rootCollection }) {
   const segs = pathname.split('/').filter(Boolean);
   if (segs.length === 0) return ['src/pages/index.astro'];
+  if (segs.length === 1 && rootCollection) {
+    const own = [`src/pages/${segs[0]}.astro`, `src/pages/${segs[0]}/index.astro`];
+    return [...own, `src/content/${rootCollection}/${segs[0]}.md`, `src/content/${rootCollection}/${segs[0]}.mdx`];
+  }
   if (
     segs.length === 3 &&
     segs[0] === collectionPrefix &&
@@ -125,6 +129,8 @@ function collectionsRead(sourcePath, collections) {
  * @param {string[]} [options.collections] Content collections rendered at
  *   /<collectionPrefix>/<collection>/<id>/ from src/content/<collection>/<id>.md.
  * @param {string} [options.collectionPrefix] First URL segment of those routes.
+ * @param {string} [options.rootCollection] A collection rendered at /<id>/, such as
+ *   blog posts moved from WordPress. Pages of the same name win.
  * @param {string[]} [options.dataModules] src/data modules that hold page
  *   CONTENT. Leave out builders imported everywhere (a JSON-LD helper, say):
  *   counting one restamps the whole sitemap on any edit to it.
@@ -132,6 +138,7 @@ function collectionsRead(sourcePath, collections) {
 export function gitLastmodSerializer({
   collections = [],
   collectionPrefix = 'library',
+  rootCollection,
   dataModules = [],
 } = {}) {
   const dates = gitDateMap();
@@ -151,7 +158,7 @@ export function gitLastmodSerializer({
 
   return (item) => {
     const { pathname } = new URL(item.url);
-    const source = sourcesFor(pathname, { collections: collectionSet, collectionPrefix })
+    const source = sourcesFor(pathname, { collections: collectionSet, collectionPrefix, rootCollection })
       .find((candidate) => dates.has(candidate));
     if (!source) {
       console.warn(`[sitemap] No source file for ${pathname} — omitting <lastmod>.`);
