@@ -56,6 +56,8 @@ async function passesTurnstile(secret, token, ip) {
  * @param {string} [options.honeypot] Field name humans never see.
  * @param {number} [options.minSeconds] Fastest believable submission, from `started_at`.
  * @param {(env: object) => Function} [options.sender] Picks the mailer from env.
+ * @param {(data: Record<string,string>) => Record<string,string>} [options.normalize]
+ *   Reshapes the posted fields first, for forms with their own naming.
  */
 export function leadHandler({
   fields,
@@ -68,13 +70,14 @@ export function leadHandler({
   honeypot = 'website',
   minSeconds = 3,
   sender = (env) => resendSender(env.RESEND_API_KEY),
+  normalize = (data) => data,
 }) {
   return async function onRequestPost({ request, env }) {
     if (!origins.includes(request.headers.get('origin'))) return json({ ok: false, error: 'origin' }, 403);
 
     let data;
     try {
-      data = await readBody(request);
+      data = normalize(await readBody(request));
     } catch {
       return json({ ok: false, error: 'body' }, 400);
     }

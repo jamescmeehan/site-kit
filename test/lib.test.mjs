@@ -115,3 +115,11 @@ test('forms: a failed send tells the visitor, not a false success', async () => 
   assert.equal(res.status, 502);
   assert.deepEqual(await res.json(), { ok: false, error: 'delivery' });
 });
+
+test('forms: normalize reshapes posted fields', async () => {
+  const sent = [];
+  const h = leadHandler({ ...options, normalize: (d) => ({ name: d['f[name]'], email: d['f[email]'] }), sender: () => async (m) => { sent.push(m); } });
+  const res = await h({ request: post({ 'f[name]': 'Al', 'f[email]': 'al@x.test' }), env: {} });
+  assert.equal(res.status, 200);
+  assert.match(sent[0].text, /Name: Al/);
+});

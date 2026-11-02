@@ -4,7 +4,7 @@ Build infrastructure shared by kinpine.com, donnerlakeinn.com and ninameehan.com
 Each site pins a tagged version, so a change reaches a site when that site updates.
 
 ```sh
-npm i github:jamescmeehan/site-kit#v0.2.0
+npm i github:jamescmeehan/site-kit#v0.2.1
 ```
 
 ## What's here
